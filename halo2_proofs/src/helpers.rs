@@ -58,7 +58,7 @@ pub trait ParaSerializable: Clone {
     fn vec_store(&self, fd: &mut File) -> io::Result<()>;
 }
 
-fn read_u32<R: io::Read>(reader: &mut R) -> io::Result<u32> {
+pub fn read_u32<R: io::Read>(reader: &mut R) -> io::Result<u32> {
     let mut r = [0u8; 4];
     reader.read(&mut r)?;
     Ok(u32::from_le_bytes(r))

@@ -8,7 +8,7 @@
 use blake2b_simd::Params as Blake2bParams;
 
 use crate::arithmetic::{BaseExt, CurveAffine, FieldExt};
-use crate::helpers::CurveRead;
+use crate::helpers::{CurveRead, read_u32};
 use crate::poly::{
     commitment::Params, Coeff, EvaluationDomain, ExtendedLagrangeCoeff, LagrangeCoeff,
     PinnedEvaluationDomain, Polynomial,
@@ -52,6 +52,8 @@ pub struct VerifyingKey<C: CurveAffine> {
 impl<C: CurveAffine> VerifyingKey<C> {
     /// Writes a verifying key to a buffer.
     pub fn write<W: io::Write>(&self, writer: &mut W) -> io::Result<()> {
+        writer.write((self.domain.get_quotient_poly_degree() as u32).to_le_bytes().as_ref())?;
+        writer.write(self.domain.k().to_le_bytes().as_ref())?;
         for commitment in &self.fixed_commitments {
             writer.write_all(commitment.to_bytes().as_ref())?;
         }
@@ -65,6 +67,8 @@ impl<C: CurveAffine> VerifyingKey<C> {
         reader: &mut R,
         params: &Params<C>,
     ) -> io::Result<Self> {
+        let _j = read_u32(reader)?;
+        let _k = read_u32(reader)?;
         let (domain, cs, _) = keygen::create_domain::<C, ConcreteCircuit>(params);
 
         let fixed_commitments: Vec<_> = (0..cs.num_fixed_columns)
